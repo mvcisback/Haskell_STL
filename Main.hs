@@ -1,17 +1,16 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Data.Maybe
+import Control.Monad  (join)
+import Data.Bifunctor (bimap)
 import Data.Bits
-import Numeric.LinearAlgebra
 import qualified Data.PQueue.Max as PQ
 
+type R = Double
 type Interval = (R, R)
 type Rec = [Interval]
 type RecSet = [Rec]
 type OrderedRecSet = PQ.MaxQueue (R, Rec)
-type Oracle = Vector R -> Bool
-
+type Oracle = [R] -> Bool
 
 subdivide :: Rec -> Rec -> RecSet
 subdivide tol r = alphaToRec <$> alphas
@@ -25,16 +24,35 @@ subdivide tol r = alphaToRec <$> alphas
 
 
 boundingBox :: Oracle -> Rec -> Rec
-boundingBox = undefined
+boundingBox o r = zip bot top'
+    where (bot, top) = (fst <$> r, snd <$> r)
+          corner i = zipWith (curry $ convexComb 1) top (basis i)
+          basis i = [if j == i then 1 else 0 | j <- [1..]]
+          f i = (snd <$> binsearchRec o (zip bot $ corner i)) !! i
+          top' = f <$> [1..]
+
+
+convexComb :: Num a => a -> (a,a) -> a
+convexComb a (x,y) = x + (y-x)*a
 
 refineRec :: Oracle -> Rec -> RecSet
-refineRec o r = refineRec' (binsearch o r) r
+refineRec o r = subdivide (binsearchRec o r) r
 
-binsearch :: Oracle -> Rec -> Vector R
-binsearch = undefined
+binsearchRec :: Oracle -> Rec -> Rec
+binsearchRec o r = fInv $ binsearch $ o . f
+    where f a = convexComb a <$> r
+          fInv = uncurry zip . join bimap f
 
-refineRec' :: Vector R -> Rec -> RecSet
-refineRec' = undefined
+eps = 0.1
+
+-- TODO: implement edge cases
+binsearch :: (R -> Bool) -> Interval
+binsearch o = binsearch' o (0,1)
+
+binsearch' o i@(lo,hi) | hi - lo <= eps = i
+                       | o m = binsearch' o (lo, m)
+                       | otherwise = binsearch' o (m, hi)
+    where m = convexComb 0.5 i
 
 -- Volume Guided Refinement
 
