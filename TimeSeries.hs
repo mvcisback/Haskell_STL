@@ -1,6 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module TimeSeries where
 
+import Control.Arrow (first)
 import Data.IntervalMap
 import Data.IntervalMap.Interval
 
@@ -14,16 +15,16 @@ toIntervalList :: [(Double, b)] -> [(Interval Double, b)]
 toIntervalList xs = zip intervals (snd <$> xs)
     where
       times = (fst <$> xs) ++ [oo]
-      intervals = zipWith (\a b -> IntervalCO a b) times (tail times)
+      intervals = zipWith IntervalCO times (tail times)
                   
 toTree :: TimeSeries b -> TimeSeries' b
 toTree = fromList . toIntervalList
 
 fromTree :: TimeSeries' b -> TimeSeries b
-fromTree = fmap (\(i, x) -> (lowerBound i, x)) . toAscList
+fromTree = fmap (first lowerBound) . toAscList
 
 compress :: TimeSeries' b -> TimeSeries' b
-compress = flattenWith (\a _ -> a)
+compress = flattenWith const
 
 tsBinOp :: (a -> a -> a) -> TimeSeries a -> TimeSeries a -> TimeSeries a
 tsBinOp op a b = fromTree $ tsBinOp' op (toTree a) (toTree b)

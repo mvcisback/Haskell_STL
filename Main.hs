@@ -55,7 +55,6 @@ binsearch' o i@(lo,hi) | hi - lo <= eps = i
     where m = convexComb 0.5 i
 
 -- Volume Guided Refinement
-
 volume :: Rec -> R
 volume = product . fmap (abs . uncurry (-))
 
@@ -67,4 +66,4 @@ vgr :: Oracle -> OrderedRecSet -> [OrderedRecSet]
 vgr o q = q'' : vgr o q''
     where Just ((_, r), q') = PQ.maxView q
           refined = refineRec o r
-          q'' = q' `PQ.union` (PQ.fromList $ zip (volume <$> refined) refined)
+          q'' = q' `PQ.union` PQ.fromList (zip (volume <$> refined) refined)

@@ -37,7 +37,7 @@ type Store = Map String TS
 
 
 implies :: Bool -> Bool -> Bool
-implies a b = (not a) || b
+implies a b = not a || b
 
 iff :: Bool -> Bool -> Bool
 iff a b = (a `implies` b) && (b `implies` a)
@@ -62,7 +62,7 @@ eval (e `XOR` e') s = tsBinOp xor (eval e s) (eval e' s)
 eval (F i e) s = evalF i $ eval e s
 eval (G i e) s = evalG i $ eval e s
 eval (TimedU i@(a, b) e e') s = eval e'' s
-    where e'' = (F i e') `And` (G (0, a) (e `U` e'))
+    where e'' = F i e' `And` G (0, a) (e `U` e')
 eval (e `U` e') s = undefined
 
 evalG (a, b) = fmap $ \(t, v) -> (max 0 (if v then t-a else t-b), v)
