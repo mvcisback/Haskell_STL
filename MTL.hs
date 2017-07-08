@@ -7,7 +7,7 @@ import Data.Maybe
 
 import Algebra.Lattice
 
-import TimeSeries (TimeSeries, TimeSeries', toTree, toIntervalList, tsBinOp)
+import TimeSeries (TimeSeries, tsBinOp)
 
 type Interval = (Double, Double)
 
@@ -24,9 +24,6 @@ data MTL = AtomicPred String
      | F Interval MTL
      | G Interval MTL
      | TimedU Interval MTL MTL
-
--- TODO: implement Eq
--- TODO: implement Show
 
 instance JoinSemiLattice MTL where
     e \/ e' = Or e e'
